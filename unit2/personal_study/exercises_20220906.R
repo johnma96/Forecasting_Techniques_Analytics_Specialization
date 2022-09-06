@@ -130,4 +130,16 @@ View(bt)
 # 2.2.4 List object #
 #-------------------#
 
+# List is more general than data.frames objects, are like dictionaries in 
+# python or json objects (key:value)
+# Lists can store othe type of objects like scalars, data.frames, strings, etc.
 
+a = matrix(c(2,3,4,5), 2, 2)
+b = c("complex", "real")
+d = runif(120) # Random number between 0 and 1
+list_ = list(a=a, b=b, d=d, D = dataframe_object)
+
+str(list_)
+
+# Extract some element
+list_$D$age
