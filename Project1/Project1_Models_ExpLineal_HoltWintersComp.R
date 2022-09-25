@@ -4,6 +4,8 @@
 # Libraries
 library(ggplot2)
 require(fpp2)
+library(ggfortify)
+source("medidas.r")
 
 # Remove variables on memory
 rm(list=ls())
@@ -35,5 +37,29 @@ legend("bottomright",                          # Add legend to plot
        ,col = 1:2
        )
 
-# lyi = log(yi)
+# autoplot(y, geom = "line", ts.colour = ('#cd1818')) #Option 1
 
+lyi = log(yi)
+
+ti = seq(1,length(yi))
+
+# Estimate auxiliar model log - linear
+mod.llin = lm(lyi~ti)
+
+# save parameters of model log-linear
+b0.est = mod.llin$coefficient[1]
+b1.est = mod.llin$coefficient[2]
+
+# Save data in dataframe
+Ds = data.frame(yi,ti)
+
+# Use nls function for adjust 
+mod.exp = nls(yi~exp(beta0+beta1*ti),
+    data=Ds,start=list(beta0=b0.est, beta1=b1.est))
+
+# Results 
+str(summary(mod.exp))
+
+M.exp = medidas(mod.exp,yi,2)
+
+str(M.exp)
