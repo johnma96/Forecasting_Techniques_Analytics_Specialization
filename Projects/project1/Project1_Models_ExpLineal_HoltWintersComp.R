@@ -28,7 +28,7 @@ medidas.yest <- function(y, yest, k) {
     bic <- log(T^(k / T) * (T - k) * mse / T)
 
     M <- c(mse, sqrt(mse), Ra2, aic, bic)
-    names(M) <- c("mse", "rmse", "R2-ad", "log.aic", "log.bic")
+    names(M) <- c("MSE", "RMSE", "R2-ajus", "logAIC", "logBIC")
     return(M)
 }
 
@@ -45,7 +45,7 @@ medidas <- function(m, y, k) {
     Ra2 <- 1 - (T - 1) * (1 - R2) / (T - k)
     aic <- log((T - k) * exp(2 * k / T) * mse / T)
     bic <- log(T^(k / T) * (T - k) * mse / T)
-    M <- c(, mse, sqrt(mse), Ra2, aic, bic)
+    M <- c(mse, sqrt(mse), Ra2, aic, bic)
     names(M) <- c("MSE", "RMSE", "R2-ajus", "logAIC", "logBIC")
     return(M)
 }
@@ -79,7 +79,7 @@ plot(yi,
     xlab = "Año",
     ylab = "Megalitros"
 )
-lines(yf, , type = "l", col = "red") # Plot second time series
+lines(yf, , type = "l", col = "#ff7300") # Plot second time series
 
 
 # Add legend to plot
@@ -102,27 +102,171 @@ plot(components_yi)
 lyi = log(yi)
 
 ti = seq(1,length(yi))
+ti2 = ti*ti
+
+It = seasonaldummy(yi)
 
 # Estimate auxiliar model log - linear
-mod.llin = lm(lyi~ti)
+mod.llin = lm(lyi~ti + It)
+summary(mod.llin)
 
-# save parameters of model log-linear
-b0.est = mod.llin$coefficient[1]
-b1.est = mod.llin$coefficient[2]
-
-# Save data in dataframe
-Ds = data.frame(yi,ti)
+# Seasonal linear exponential model
+T = length(yi)
+Xt = cbind(rep(1,T),ti,It)
+Ds = data.frame(yi,Xt)
+theta.0 = mod.llin$coefficient
 
 # Use nls function for adjust 
-mod.exp = nls(yi~exp(beta0+beta1*ti),
-    data=Ds,start=list(beta0=b0.est, beta1=b1.est))
+mod.exp_lin = nls(yi~exp(Xt%*%theta),
+data=Ds, start= list(theta=theta.0))
 
 # Results 
-str(summary(mod.exp))
+(summary(mod.exp_lin))
 
-M.exp = medidas(mod.exp,yi,2)
+M.exp_lin = medidas(mod.exp_lin,yi,2)
 
-str(M.exp)
+(M.exp_lin)
+
+yhat_exp_lin = fitted(mod.exp_lin)
+yhat_exp_lin = ts(yhat_exp,frequency = 4, start = c(1956, 01))
+
+# Visually evaluate the fitted
+plot(yi,
+    type = "l", col = "#000000", # Plot first time series
+    ylim = c(min(yi, yhat_exp_lin), max(yi, yhat_exp_lin)),
+    xlim = c(time(yi)[1], tail(time(yi), n = 1)),
+    main = "Datos observados vs Valores ajustados
+    Modelo Exponencial - Lineal + indicadoras",
+    xlab = "Año",
+    ylab = "Megalitros"
+)
+lines(yhat_exp_lin, , type = "l", col = "#f30914")
+
+# Add legend to plot
+text_legend <- c("Observados", "Ajustados")
+legend("bottomright",
+    legend = text_legend, ,
+    text.width = strwidth(text_legend)[1] * 2,
+    lty = 1, ,
+    col = c( "#000000","#f30914")
+)
+
+#-----------------------------------#
+#------------ Forecast -------------#
+
+Itf = seasonaldummy(yi,len_yf)
+tf = seq(T+1,T+len_yf,1)
+
+tf2 = tf*tf
+Xtf = cbind(rep(1,len_yf),tf,Itf)
+
+pron_exp_lin = predict(mod.exp_lin,data.frame(Xt = I(Xtf)))
+y_pron_explin = ts(pron_exp_lin,start=time(yf)[1],frequency=4)
+
+plot(yf,
+    type = "o", col = "black", # Plot first time series
+    ylim = c(min(y_pron_explin,yf), max(y_pron_explin,yf)),
+    xlim = c(time(yf)[1], tail(time(yf), n = 1)),
+    main = "Pronósticos Modelo Exponencial Lineal: 
+    Producción trimestral de cerveza en Australia",
+    xlab = "Año",
+    ylab = "Megalitros"
+)
+
+# lines(yhat_exp_lin, type = "l", col = "#f30914")
+lines(y_pron_explin, type = "o", col = "#f30914")
+
+# Add legend to plot
+text_legend <- c("Observados", "Ajustados")
+legend("bottom",
+    legend = text_legend, ,
+    text.width = strwidth(text_legend)[1] * 2,
+    lty = 1, ,
+    col = c( "#000000","#f30914")
+)
+
+# Metric for quality forecast MAPE, RMSE, UTHEIL
+R <- rbind(accuracy(yf, y_pron_explin))[, c(2, 5)]
+Utheil <- c(TheilU(yf, y_pron_explin))
+R <- c(R, setNames(Utheil, "Utheil"))
+R
+
+
+#-----------------------------------------------------------------------------#
+#-------------Test Model No1 Variation: Quadratic - Exponential ----------#
+#-----------------------------------------------------------------------------#
+
+mod.llin2 = lm(lyi~ti + ti2 + It)
+
+# Seasonal linear exponential model
+T = length(yi)
+Xt = cbind(rep(1,T),ti,ti2,It)
+Ds = data.frame(yi,Xt)
+theta.0 = mod.llin2$coefficient
+
+# Use nls function for adjust 
+mod.exp_q = nls(yi~exp(Xt%*%theta),
+data=Ds, start= list(theta=theta.0))
+
+M.exp_q = medidas(mod.exp_q,yi,2)
+
+(M.exp_q)
+
+yhat_exp_q = fitted(mod.exp_q)
+yhat_exp_q = ts(yhat_exp_q,frequency = 4, start = c(1956, 01))
+
+# Visually evaluate the fitted
+plot(yi,
+    type = "l", col = "#000000", # Plot first time series
+    main = "Datos observados vs Valores ajustados
+    Modelo Exponencial - Cuadratico + indicadoras",
+    xlab = "Año",
+    ylab = "Megalitros"
+)
+lines(yhat_exp_q, , type = "l", col = "#790a0a")
+
+# Add legend to plot
+text_legend <- c("Observados", "Ajustados")
+legend("bottomright",
+    legend = text_legend, ,
+    text.width = strwidth(text_legend)[1] * 2,
+    lty = 1, ,
+    col = c( "#000000","#790a0a")
+)
+
+#-----------------------------------#
+#------------ Forecast -------------#
+
+Itf = seasonaldummy(yi,len_yf)
+tf = seq(T+1,T+len_yf,1)
+
+tf2 = tf*tf
+Xtf = cbind(rep(1,len_yf),tf,tf2,Itf)
+
+pron_exp_q = predict(mod.exp_q,data.frame(Xt = I(Xtf)))
+y_pron_exp_q = ts(pron_exp_q,start=time(yf)[1],frequency=4)
+
+plot(yf,
+    type = "o", col = "black", # Plot first time series
+    ylim = c(min(y_pron_exp_q,yf), max(y_pron_exp_q,yf)),
+    xlim = c(time(yf)[1], tail(time(yf), n = 1)),
+    main = "Pronósticos Modelo Exponencial Cuadrático: 
+    Producción trimestral de cerveza en Australia",
+    xlab = "Año",
+    ylab = "Megalitros"
+)
+
+# lines(yhat_exp_lin, type = "l", col = "#f30914")
+lines(y_pron_exp_q, type = "o", col = "#790a0a")
+
+# Add legend to plot
+text_legend <- c("Observados", "Ajustados")
+legend("bottom",
+    legend = text_legend, ,
+    text.width = strwidth(text_legend)[1] * 2,
+    lty = 1, ,
+    col = c( "#000000","#790a0a")
+)
 
 
 #-----------------------------------------------------------------------------#
@@ -147,31 +291,48 @@ medidas.yest(yi, Yt_hat, 3) # OJO QUE DEVUELVE RMSE
 # Visually evaluate the fitted
 plot(yi,
     type = "l", col = "#000000", # Plot first time series
-    main = "Y real vs modelo Holt-Winters Componentes",
+    main = "Datos observados vs Valores ajustados
+     Modelo Holt-Winters componentes",
     xlab = "Año",
     ylab = "Megalitros"
 )
-lines(Yt_hat, , type = "l", col = "#f3a60d")
+lines(Yt_hat, , type = "l", col = "#0d24f3")
 
-#----------------#
-#--- Forecast ---#
-#----------------#
+# Add legend to plot
+text_legend <- c("Observados", "Ajustados")
+legend("bottomright",
+    legend = text_legend, ,
+    text.width = strwidth(text_legend)[1] * 2,
+    lty = 1, ,
+    col = c( "#000000","#0d24f3")
+)
+
+#-----------------------------------#
+#------------ Forecast -------------#
 y_pron <- predict(model, len_yf, prediction.interval = TRUE)
 
-plot(y,
-    type = "l", col = "black", # Plot first time series
-    main = "Producción trimestral de cerveza en Australia",
+plot(yf,
+    type = "o", col = "black", # Plot first time series
+    ylim = c(min(y_pron[, 1],yf), max(y_pron[, 1],yf)),
+    xlim = c(time(yf)[1], tail(time(yf), n = 1)),
+    main = "Pronósticos Modelo Holt-Winters: 
+    Producción trimestral de cerveza en Australia",
     xlab = "Año",
     ylab = "Megalitros"
 )
-lines(Yt_hat, , type = "l", col = "#f20505")
+lines(y_pron[, 1], , type = "o", col = "#0d24f3")
 
-# Visually evaluate the prediction
-lines(yf, , type = "l", col = "#000000")
-lines(y_pron[, 1], , type = "l", col = "orange")
+text_legend <- c("Observados", "Ajustados")
+legend("bottomright",
+    legend = text_legend, ,
+    text.width = strwidth(text_legend)[1] * 2,
+    lty = 1, ,
+    col = c( "#000000","#0d24f3")
+)
 
 # Metric for quality forecast MAPE, RMSE, UTHEIL
 R <- rbind(accuracy(yf, y_pron[, 1]))[, c(2, 5)]
 Utheil <- c(TheilU(yf, y_pron[, 1]))
 R <- c(R, setNames(Utheil, "Utheil"))
+R
 # rownames(R) <- c("HWC")
