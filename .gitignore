@@ -1,2 +1,5 @@
 #Files ignore 
 data/3008172-Tecnicas de Pronosticos.xlsx
+*.docx
+*.doc
+
