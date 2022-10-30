@@ -1,3 +1,4 @@
+# "H:\\My Drive\\UN_Analytics_Specialization\\Forecasting_Techniques\\Chapter8_ARMA_ModelsForWaste\\Ejemplos modelos S-ARMA con R\\ejemplo.callcenter.sarma.r"
 
 #-------------------Cargar los datos
 datos = read.table("llamadas.banco.prn", header = TRUE, stringsAsFactors = FALSE)
@@ -114,7 +115,7 @@ tt = seq((T-m+1),T,1);
 Itt = fourier(yr,2,m);
 
 py.l = predict(m.l,data.frame(ti=tt,It=I(Itt)))
-p.arma = predict(m.2,n.ahead=m)$pred
+p.arma = predict(m.2,n.ahead=m)$pred 
 py.tot = py.l+p.arma
 
 
