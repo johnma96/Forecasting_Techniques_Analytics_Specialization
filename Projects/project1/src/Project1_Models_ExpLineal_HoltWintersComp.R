@@ -1,8 +1,6 @@
 # Development of project No. 1 Forecasting Techniques
 # Authors: Camilo Cabrera - John Mario Montoya
 
-# For run mario: "H:\\My Drive\\UN_Analytics_Specialization\\Forecasting_Techniques\\Projects\\project1\\src"
-
 # Installing libraries
 install.packages("ggplotw")
 install.packages("fpp2")
