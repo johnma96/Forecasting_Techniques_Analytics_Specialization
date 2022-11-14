@@ -2,6 +2,8 @@
 #        aplicaciones de pruebas, identificacion , estimacion
 #        pronosticos.
 
+# H:\My Drive\\UN_Analytics_Specialization\\Forecasting_Techniques\\Chapter10_SeasonalUnitRoots_SARIMAmodels\\Ejemplos de pruebas de raiz unitaria estacionales con R-20221114
+
 library(forecast)
 
 
