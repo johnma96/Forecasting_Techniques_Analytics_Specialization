@@ -222,14 +222,15 @@ res=armasubsets(y=yr,nar=14,nma=14,y.name='y',ar.method='ols')
 par(mfrow=c(1,1))
 plot(res)
 
-# Usando el modelo HW p = 0 (1), ps = 4, q = 0 (2), qs = 0 (3)
+# Usando el modelo HW p = 0 (1), ps = 0 (4), q = 0 (2), qs = 0 (3)
+# ARIMA(0,0,0)(0,0,3)[4]
 # ARIMA(1,0,2)(3,0,3)[4] with zero mean
 
 # Usando el modelo exponencial lineal p = 4, ps = 3, q = 0 (2), qs = 0 (3)
 # ARIMA(4,0,0)(3,0,0)[4] with zero mean
 
 #------------identificador auto.arima
-auto.arima(yr)
+auto.arima(yr, stationary = TRUE, seasonal = TRUE) #stationary = TRUE para evitar modelos integrados
 
 # Usando el modelo HW (Se obtiene un MA creo!!!!)
 # ARIMA(1,0,2)(0,0,0)[4] with zero mean
@@ -241,7 +242,7 @@ auto.arima(yr)
 
 # ---- Modelos usando Holt-Winters
 
-m.1 = arima(yr,order=c(1,0,2),seasonal=list(order=c(3,0,3),period=4))
+m.1 = arima(yr,order=c(1,0,2),seasonal=list(order=c(0,0,0),period=4))
 coeftest(m.1)
 
 m.2 = arima(yr,order=c(1,0,2),seasonal=list(order=c(0,0,0),period=4))
