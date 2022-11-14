@@ -285,8 +285,8 @@ plot(res)
 # ARMA(4,1,1)(4,1,4)[4]
 # ARMA(4,1,1)(3,1,4)[4]
 
-(2,1,1)(2,1,2) no nos da signicativo 1 parámetro
-(2,1,1)(0,1,1)
+# (2,1,1)(2,1,2) no nos da signicativo 1 parámetro
+# (2,1,1)(0,1,1)
 
 # estimar
 m1 = arima(yi,order=c(2,1,1),
